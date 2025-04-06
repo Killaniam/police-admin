@@ -2,14 +2,16 @@
 
 import Map from "@/components/map";
 import axios from "axios";
-import Image from "next/image";
+import Image from "next/image"; 
 import Link from "next/link";
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 
+// Main component definition
 export default function Home() {
-  const [incidents, setIncidents] = useState([]);
-  const [editingId, setEditingId] = useState(null);
-  const [formData, setFormData] = useState({
+  // State declarations for managing incidents, form data, UI states etc
+  const [incidents, setIncidents] = useState([]); // Stores list of all incidents
+  const [editingId, setEditingId] = useState(null); // Tracks which incident is being edited
+  const [formData, setFormData] = useState({ // Form data for creating/editing incidents
     suspects: "",
     suspectsDetails: "",
     incidentType: "", 
@@ -17,11 +19,12 @@ export default function Home() {
     time: "",
     comment: ""
   });
-  const [modalOpen, setModalOpen] = useState(false);
-  const [selectedImage, setSelectedImage] = useState("");
-  const [notification, setNotification] = useState({ type: '', message: '' });
-  const [isLoading, setIsLoading] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false); // Controls image modal visibility
+  const [selectedImage, setSelectedImage] = useState(""); // Stores currently viewed image URL
+  const [notification, setNotification] = useState({ type: '', message: '' }); // Manages notification state
+  const [isLoading, setIsLoading] = useState(false); // Tracks loading state
 
+  // Effect to auto-hide notifications after 5 seconds
   useEffect(() => {
     if(notification.message) {
       const timer = setTimeout(() => {
@@ -31,6 +34,7 @@ export default function Home() {
     }
   }, [notification]);
 
+  // Function to fetch all incidents from API
   const fetchIncidents = useCallback(async () => {
     setIsLoading(true);
     try {
@@ -44,20 +48,24 @@ export default function Home() {
     }
   }, []);
 
+  // Effect to fetch incidents on component mount
   useEffect(() => {
     fetchIncidents();
   }, [fetchIncidents]);
 
+  // Handler for opening image modal
   const handleViewImage = useCallback((imageUrl) => {
     setSelectedImage(imageUrl);
     setModalOpen(true);
   }, []);
 
+  // Handler for closing image modal
   const handleCloseModal = useCallback(() => {
     setModalOpen(false);
     setSelectedImage("");
   }, []);
 
+  // Handler for resolving an incident
   const handleResolve = useCallback(async (id) => {
     try {
       await axios.put(`https://police-be.onrender.com/api/incidents/edit/${id}`, { resolved: true });
@@ -71,11 +79,13 @@ export default function Home() {
     }
   }, []);
 
+  // Handler for initiating incident edit
   const handleEdit = useCallback(({ _id, suspects, suspectsDetails, incidentType, incidentDetails, time, comment }) => {
     setEditingId(_id);
     setFormData({ suspects, suspectsDetails, incidentType, incidentDetails, time, comment });
   }, []);
 
+  // Handler for updating an incident
   const handleUpdateIncident = useCallback(async () => {
     try {
       await axios.put(`https://police-be.onrender.com/api/incidents/edit/${editingId}`, formData);
@@ -98,6 +108,7 @@ export default function Home() {
     }
   }, [editingId, formData]);
 
+  // Handler for form input changes
   const handleInputChange = useCallback(({ target: { name, value } }) => {
     setFormData(prev => ({
       ...prev,
@@ -105,6 +116,7 @@ export default function Home() {
     }));
   }, []);
 
+  // Handler for canceling incident update
   const handleCancelUpdate = useCallback(() => {
     setEditingId(null);
     setFormData({
@@ -117,6 +129,7 @@ export default function Home() {
     });
   }, []);
 
+  // Memoized form fields configuration
   const formFields = useMemo(() => [
     { name: "suspects", label: "Suspect's Name" },
     { name: "suspectsDetails", label: "Suspect's Details" },
@@ -126,12 +139,17 @@ export default function Home() {
     { name: "comment", label: "Comment" }
   ], []);
 
+  // Memoized table headers configuration
   const tableHeaders = useMemo(() => [
     "Suspect's name", "Suspect's details", "Incident type", "Incident Details",
     "Submitted By","Incident Time", "Submitted Date", "Status", "Image", "Actions"
   ], []);
+
+  // JSX for main layout
   return (
+    // Main container with flex layout
     <div className="flex h-screen bg-white">
+      {/* Notification component */}
       {notification.message && (
         <div className={`fixed top-4 right-4 p-4 rounded-md ${
           notification.type === 'success' ? 'bg-green-500' : 'bg-red-500'
@@ -139,6 +157,7 @@ export default function Home() {
           {notification.message}
         </div>
       )}
+      {/* Sidebar navigation */}
       <div className="w-64 bg-white shadow-lg">
         <div className="p-4">
           <h1 className="text-lg font-bold text-gray-800 mb-8">Admin Panel</h1>
@@ -153,12 +172,15 @@ export default function Home() {
         </div>
       </div>
 
+      {/* Main content area */}
       <div className="flex-1 p-8 flex flex-col">
+        {/* Incidents table section */}
         <div className="bg-white rounded-lg shadow-lg p-6 h-[50vh] overflow-x-auto">
           <h2 className="text-2xl font-semibold text-gray-800 mb-6">
             {editingId ? "UPDATE INCIDENT DETAILS" : "INCIDENT DETAILS"}
           </h2>
 
+          {/* Edit form */}
           {editingId && (
             <div className="bg-gray-50 p-6 rounded-lg mb-6">
               {formFields.map(({ name, label }) => (
@@ -185,6 +207,7 @@ export default function Home() {
             </div>
           )}
 
+          {/* Loading spinner or incidents table */}
           {isLoading ? (
             <div className="flex justify-center items-center h-32">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
@@ -243,10 +266,12 @@ export default function Home() {
             </table>
           )}
         </div>
+        {/* Map component */}
         <div className="h-[50vh] z-40">
           <Map incidents={incidents} />
         </div>
       </div>
+      {/* Image modal */}
       {modalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
           <div className="bg-white p-6 rounded-lg shadow-lg max-w-lg">
